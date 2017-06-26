@@ -13,7 +13,7 @@ BINARIES=Breakout
 all: $(BINARIES)
 
 Breakout: Breakout.c
-	$(CC) -o Breakout Breakout.c $(CFLAGS) $(SFLAGS) $(IMAGE_FLAGS) $(MIXER_FLAGS) $(TEXT_FLAGS)
+	$(CC) -o Breakout Breakout.c $(CFLAGS) $(SFLAGS) $(IMAGE_FLAGS) $(MIXER_FLAGS) $(TEXT_FLAGS) 
 
 clean:
 	rm -rf *.o *.exe *.bak *.c~ $(BINARIES) core a.out
