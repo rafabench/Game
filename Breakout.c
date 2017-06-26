@@ -47,6 +47,9 @@ const int IMAGE_HEIGHT_BLOCO = 50;
 const int IMAGE_WIDTH_CORACAO = 49;
 const int IMAGE_HEIGHT_CORACAO = 52;
 
+const int IMAGE_WIDTH_BAR = 930;
+const int IMAGE_HEIGHT_BAR = 40;
+
 int vida = 3;
 int ponto = 0;
 int contador = lb*cb;
@@ -111,6 +114,7 @@ SDL_Surface* textSurface = NULL;
 //Globally used font
 TTF_Font *gFont = NULL;
 TTF_Font *gFont1 = NULL;
+TTF_Font *gFont2 = NULL;
 
 //The actual hardware texture
 SDL_Texture* font_texture = NULL;
@@ -124,6 +128,8 @@ NPC ball[vb];
 PLAT platform;
 BLOCO bloco[lb][cb];
 IMAGEM coracao;
+IMAGEM redbar;
+IMAGEM greenbar;
 
 /*The surface contained by the window*/
 SDL_Surface* gScreenSurface = NULL;
@@ -139,11 +145,15 @@ SDL_Surface* gJPGbloco3 = NULL;
 SDL_Surface* gJPGbloco4 = NULL;
 SDL_Surface* gJPGbloco5 = NULL;
 SDL_Surface* gJPGcoracao = NULL;
+SDL_Surface* gJPGredbar = NULL;
+SDL_Surface* gJPGgreenbar = NULL;
 /*
  * function prototypes
  */
 
-int gameplay(SDL_Event e);
+int menu();
+
+int gameplay();
 
 /*Starts up SDL and creates window*/
 int init();
@@ -151,11 +161,11 @@ int init();
 /*Loads media*/
 int loadMedia();
 
-int ttf(char *vidas, char *pontos, char *niveis, char *speeds, char *time);
+int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time);
 
-int check(SDL_Event e);
+int check();
 
-int gameover(SDL_Event e);
+int gameover();
 
 void handle_input(PLAT *p, SDL_Event event);
 /*Frees media and shuts down SDL*/
@@ -195,8 +205,8 @@ int main( int argc, char* args[] ) {
             printf( "Failed to load media!\n" );
         }
         else {
-			SDL_Event e;
-			gameplay(e);
+			menu();
+			gameplay();
         }
     }
 
@@ -227,7 +237,79 @@ char* converteTimeparaStr(int *sec, int *min, int *hour){
 	return str;
 }
 
-int gameplay(SDL_Event e){
+int menu(){
+	SDL_Rect srcRect, dstRect;
+	SDL_Event e;
+	/*FILL SURFACE BLACK*/
+	
+	SDL_FillRect( gScreenSurface, NULL, 
+                              SDL_MapRGB( gScreenSurface->format, 
+                              0x00, 0x00, 0x00 ) );
+	SDL_Color backgroundColor = { 0, 0, 0 };
+	SDL_Color foregroundColor = { 255, 255, 255 };
+	
+	/*BLIT BREAKOUT*/
+
+	startclock = SDL_GetTicks();
+	while( SDL_PollEvent( &e ) != 0 ) {
+		switch (e.type) {
+			case SDL_QUIT:
+				exit(1);
+				break;
+			case SDL_KEYDOWN:
+				if (e.key.keysym.sym == SDLK_ESCAPE) {
+					exit(1);
+				}
+			break;
+		}
+	}
+	
+	redbar = createIMAGEM(0, 0, gJPGredbar);
+	greenbar = createIMAGEM(0, SCREEN_HEIGHT_EXT-IMAGE_HEIGHT_BAR, gJPGgreenbar);
+	
+	srcRect.x = 0; srcRect.y = 0;
+	srcRect.w = IMAGE_WIDTH_BAR;
+	srcRect.h = IMAGE_HEIGHT_BAR;
+	dstRect.x = redbar.posX;
+	dstRect.y = redbar.posY;
+	if( SDL_BlitSurface( redbar.image, &srcRect, 
+									gScreenSurface, &dstRect ) < 0 ) {
+					printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+				}
+				
+	srcRect.x = 0; srcRect.y = 0;
+	srcRect.w = IMAGE_WIDTH_BAR;
+	srcRect.h = IMAGE_HEIGHT_BAR;
+	dstRect.x = greenbar.posX;
+	dstRect.y = greenbar.posY;
+	if( SDL_BlitSurface( greenbar.image, &srcRect, 
+									gScreenSurface, &dstRect ) < 0 ) {
+					printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+				}
+				
+	SDL_Surface* textSurface = TTF_RenderText_Shaded(gFont1, "BREAKOUT", foregroundColor, backgroundColor);
+	SDL_Rect textLocation = { 90, 40, 200, 200 };              
+	SDL_BlitSurface(textSurface, NULL, gScreenSurface, &textLocation);
+	
+	SDL_Surface* textSurface1 = TTF_RenderText_Shaded(gFont2, "PLAY", foregroundColor, backgroundColor);
+	SDL_Rect textLocation1 = { 330, 190, 200, 200 };              
+	SDL_BlitSurface(textSurface1, NULL, gScreenSurface, &textLocation1);
+	
+	SDL_Surface* textSurface2 = TTF_RenderText_Shaded(gFont2, "RANKING", foregroundColor, backgroundColor);
+	SDL_Rect textLocation2 = { 250, 290, 200, 200 };              
+	SDL_BlitSurface(textSurface2, NULL, gScreenSurface, &textLocation2);
+	
+	SDL_Surface* textSurface3 = TTF_RenderText_Solid(gFont2, "ABOUT US", foregroundColor);
+	SDL_Rect textLocation3 = { 230, 390, 200, 200 };              
+	SDL_BlitSurface(textSurface3, NULL, gScreenSurface, &textLocation3);
+	
+	SDL_UpdateWindowSurface( gWindow );
+	SDL_Delay(5000);
+	
+    return 1;
+}
+
+int gameplay(){
 	SDL_Rect srcRect, dstRect;
     int i, j, rand0,rand1,rand2,rand3,rand4,rand5, secstart,seccurrent,timerun;
     int sec, min, hour;
@@ -235,7 +317,7 @@ int gameplay(SDL_Event e){
     int c = 5;
     int quit;
     rand0 = rand1 = rand2 = rand3 = rand4 = rand5 = 0;
-    
+    SDL_Event e;
 	
 	secstart = time(NULL);
 	
@@ -293,7 +375,7 @@ int gameplay(SDL_Event e){
 			}
 		}
 		
-		check(e);
+		check();
 		
 		deltaclock = SDL_GetTicks() - startclock;
 		startclock = SDL_GetTicks();
@@ -334,7 +416,7 @@ int gameplay(SDL_Event e){
 		
 		/*Using  TTF*/
 		
-		ttf(vidas, pontos, niveis, speeds, time);
+		ttfgame(vidas, pontos, niveis, speeds, time);
 		
 		
 		for(i = 0 ; i < vb ; i++){
@@ -413,7 +495,7 @@ int gameplay(SDL_Event e){
 	return 1;
 }
 
-int check(SDL_Event e){
+int check(){
 	int i,j;
 	if(contador2 <= 0 && vida <= 9){
 		contador2 = 10000;
@@ -438,14 +520,14 @@ int check(SDL_Event e){
 		}
 	}
 	if(!vida){
-		gameover(e);
+		gameover();
 	}
 	return 1;
 }
 
-int gameover(SDL_Event e){
+int gameover(){
 	
-	/*FILL SURFACE WHITE*/
+	/*FILL SURFACE BLACK*/
 	
 	SDL_FillRect( gScreenSurface, NULL, 
                               SDL_MapRGB( gScreenSurface->format, 
@@ -696,7 +778,7 @@ int init() {
 		printf("Wav: SDL error=%s\n", SDL_GetError());
 		return false;
 	}
-	nope = Mix_LoadWAV("nope.wav");
+	nope = Mix_LoadWAV("GroundSound.wav");
 	if (!sound2) {
 		printf("Wav: SDL error=%s\n", SDL_GetError());
 		return false;
@@ -771,7 +853,16 @@ int loadMedia() {
         printf( "Failed to load image! SDL Error: %s\n", SDL_GetError() );
         success = false;
     }
-
+    gJPGredbar = loadSurface( "./redbar.jpeg" );
+    if( gJPGredbar == NULL ) {
+        printf( "Failed to load image! SDL Error: %s\n", SDL_GetError() );
+        success = false;
+    }
+    gJPGgreenbar = loadSurface( "./greenbar.jpeg" );
+    if( gJPGgreenbar == NULL ) {
+        printf( "Failed to load image! SDL Error: %s\n", SDL_GetError() );
+        success = false;
+    }
 	SDL_SetColorKey( gJPGSurface, SDL_TRUE, SDL_MapRGB( gScreenSurface->format, 
                               0x00, 0x00, 0x00 ));
     SDL_SetColorKey( gJPGplatform, SDL_TRUE, SDL_MapRGB( gScreenSurface->format, 
@@ -780,22 +871,27 @@ int loadMedia() {
 	gFont = TTF_OpenFont( "arcade.ttf", 50 );
 	if( gFont == NULL )
 	{
-		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
+		printf( "Failed to load arcade font! SDL_ttf Error: %s\n", TTF_GetError() );
                 return false;
 	}
 	gFont1 = TTF_OpenFont( "arcade.ttf", 180 );
 	if( gFont1 == NULL )
 	{
-		printf( "Failed to load lazy font! SDL_ttf Error: %s\n", TTF_GetError() );
+		printf( "Failed to load arcade font! SDL_ttf Error: %s\n", TTF_GetError() );
                 return false;
 	}
-
+	gFont2 = TTF_OpenFont( "arcade.ttf", 110 );
+	if( gFont2 == NULL )
+	{
+		printf( "Failed to load arcade font! SDL_ttf Error: %s\n", TTF_GetError() );
+                return false;
+	}
 	
 	
     return success;
 }
 
-int ttf(char *vidas, char *pontos, char *niveis, char *speeds, char *time){
+int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time){
 	SDL_Color backgroundColor = { 0, 0, 0 };
 	SDL_Color foregroundColor = { 255, 255, 255 };
 	
