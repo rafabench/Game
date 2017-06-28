@@ -55,6 +55,7 @@ extern int nivel;
 extern int startclock;
 extern int deltaclock;
 extern int currentFPS;
+extern int type;
 
 /*
  * Global Variables
@@ -77,7 +78,6 @@ extern SDL_Texture* font_texture;
 //Image dimensions
 extern int mWidth;
 extern int mHeight;
-extern int w;
 
 /*The imagem character*/
 extern NPC ball[vb];
@@ -86,7 +86,7 @@ extern BLOCO bloco[lb][cb];
 extern IMAGEM coracao;
 extern IMAGEM redbar;
 extern IMAGEM greenbar;
-extern RECT button[3];
+extern RECT button[5];
 
 /*The surface contained by the window*/
 extern SDL_Surface* gScreenSurface;

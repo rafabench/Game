@@ -12,15 +12,17 @@
 #include "Defs.h"
 #include "Globais.h"
 
-void handleEvent(RECT *botao, SDL_Event* e );
+void handleEvent(RECT *botao, SDL_Event* e, int w);
 
 int menu();
 
-int gameplay();
+int gameplay(SDL_Event e);
 
-int ranking();
+int playtypes(SDL_Event e);
 
-int aboutus();
+int ranking(SDL_Event e);
+
+int aboutus(SDL_Event e);
 
 int init();
 

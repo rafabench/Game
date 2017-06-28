@@ -129,6 +129,7 @@ int check(){
 			}
 		}
 	}
+	
 	if(!vida){
 		gameover();
 	}
@@ -137,6 +138,16 @@ int check(){
 
 void moveNPC(NPC *p, PLAT *ba) {
 	int i, j;
+	if(p->posY + IMAGE_HEIGHT >= ba->posY){
+		if(p->stepX > 0){
+			if(p->posX <= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX /= 2;
+			if(p->posX >= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX *= 2;  
+		}
+		if(p->stepX < 0){
+			if(p->posX <= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX *= 2;
+			if(p->posX >= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX /= 2; 
+		}    
+	}
     p->posX += p->stepX;
     p->posY += p->stepY;
     
@@ -152,13 +163,13 @@ void moveNPC(NPC *p, PLAT *ba) {
         Mix_PlayChannel(-1,sound2, 0);
     }
     if (p->posY + IMAGE_HEIGHT >= SCREEN_HEIGHT)	{
-		p->stepY = -p->stepY;
-        p->posY += p->stepY;
+		p->stepY = rand()%2?1:-1;
+        p->stepX = rand()%2?1:-1;
         Mix_PlayChannel(-1,nope, 0);
         vida -= 1;
-        SDL_Delay(1000);
+        SDL_Delay(500);
         p->posX = ba->posX + IMAGE_WIDTH_PLATFORM/2;
-		p->posY = ba->posY - IMAGE_HEIGHT_PLATFORM/2; 
+		p->posY = ba->posY - (IMAGE_HEIGHT+1); 
     }
     if (p->posY + IMAGE_HEIGHT == ba->posY &&
         p->posX + (IMAGE_WIDTH/2) <= ba->posX + IMAGE_WIDTH_PLATFORM &&
@@ -324,14 +335,84 @@ int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time){
     return 1;
 }
 
-int gameplay(){
+int playtypes(SDL_Event e){
+	vida = 3;
+	ponto = 0;
+	contador = lb*cb;
+	contador2 = 10000;
+	nivel = 1; 
 	SDL_Rect srcRect, dstRect;
-    int i, j, rand0,rand1,rand2,rand3,rand4,rand5, secstart,seccurrent,timerun;
+	int quit = false,w = 3;
+	for(w = 3; w < 5; w++){
+		button[w] = createRECT(215,220+(100*(w-3)));
+	}
+	while( !quit ) {
+		startclock = SDL_GetTicks();
+		startclock = SDL_GetTicks();
+		while( SDL_PollEvent( &e ) != 0 ) {
+			switch (e.type) {
+				case SDL_QUIT:
+					quit = true;
+					break;
+				case SDL_KEYDOWN:
+					if (e.key.keysym.sym == SDLK_ESCAPE) {
+						quit = true;
+					}
+				break;
+			}
+			for(w = 3; w < 5; w++){
+				handleEvent(&button[w],&e,w);
+			}
+		}
+		
+		SDL_FillRect( gScreenSurface, NULL, 
+						  SDL_MapRGB( gScreenSurface->format, 
+						  0x00, 0x00, 0x00 ) );
+		redbar = createIMAGEM(0, 0, gJPGredbar);
+		greenbar = createIMAGEM(0, SCREEN_HEIGHT_EXT-IMAGE_HEIGHT_BAR, gJPGgreenbar);
+		
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = redbar.posX;
+		dstRect.y = redbar.posY;
+		if( SDL_BlitSurface( redbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}
+					
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = greenbar.posX;
+		dstRect.y = greenbar.posY;
+		if( SDL_BlitSurface( greenbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}				  
+		SDL_Color backgroundColor = { 0, 0, 0 };
+		SDL_Color foregroundColor = { 255, 255, 255 };
+	
+		SDL_Surface* textSurface1 = TTF_RenderText_Shaded(gFont2, "SUPER BREAKOUT", foregroundColor, backgroundColor);
+		SDL_Rect textLocation1 = { 70, 190, 200, 200 };              
+		SDL_BlitSurface(textSurface1, NULL, gScreenSurface, &textLocation1);
+		
+		SDL_Surface* textSurface2 = TTF_RenderText_Shaded(gFont2, "TIME ATTACK", foregroundColor, backgroundColor);
+		SDL_Rect textLocation2 = { 150, 290, 200, 200 };              
+		SDL_BlitSurface(textSurface2, NULL, gScreenSurface, &textLocation2);
+		SDL_UpdateWindowSurface( gWindow );
+	}
+	return 1;
+}
+
+int gameplay(SDL_Event e){
+	SDL_Rect srcRect, dstRect;
+    int i, j, rand0,rand1,rand2,rand3,rand4,rand5, secstart,seccurrent,timerun, timeleft,timeleft1;
     int sec, min, hour;
     int *sec1, *min1, *hour1;
     int quit;
     rand0 = rand1 = rand2 = rand3 = rand4 = rand5 = 0;
-    SDL_Event e;
+    
 	
 	secstart = time(NULL);
 	
@@ -343,9 +424,9 @@ int gameplay(){
 
 	for(i = 0 ; i < vb ; i++){
             ball[i] = createNPC(platform.posX + IMAGE_WIDTH_PLATFORM/2,
-							 platform.posY - IMAGE_HEIGHT_PLATFORM/2,
-                             1, 
-                             1, 
+							 platform.posY - (IMAGE_HEIGHT+10),
+                             -1, 
+                             -1, 
                              gJPGSurface);
 	}
 	rand0 = rand()%6;
@@ -380,10 +461,12 @@ int gameplay(){
 			switch (e.type) {
 				case SDL_QUIT:
 					quit = true;
+					exit(1);
 					break;
 				case SDL_KEYDOWN:
 					if (e.key.keysym.sym == SDLK_ESCAPE) {
 						quit = true;
+						exit(1);
 					}
 				break;
 			}
@@ -394,19 +477,39 @@ int gameplay(){
 		deltaclock = SDL_GetTicks() - startclock;
 		startclock = SDL_GetTicks();
 		
-		seccurrent = time(NULL);
-		timerun = seccurrent - secstart;
-		
 		if ( deltaclock != 0 ) currentFPS = 1000 / deltaclock;
 		
-		sec = timerun % 60;
-		timerun = timerun - sec;
-		min = timerun % 3600;
-		min = min/60;
-		hour = (timerun - min)/3600;
-		sec1 = &sec;
-		min1 = &min;
-		hour1 = &hour; 
+		seccurrent = time(NULL);
+		timerun = seccurrent - secstart;
+		timeleft = 300 -(seccurrent - secstart);
+		timeleft1 = timeleft;
+		
+		if(type == 0){
+			sec = timerun % 60;
+			timerun = timerun - sec;
+			min = timerun % 3600;
+			min = min/60;
+			hour = (timerun - min)/3600;
+			sec1 = &sec;
+			min1 = &min;
+			hour1 = &hour; 
+		
+		}
+		if(type == 1){
+			sec = timeleft1 % 60;
+			timeleft1 = timeleft1 - sec;
+			min = timeleft1 % 3600;
+			min = min/60;
+			hour = (timeleft1 - min)/3600;
+			sec1 = &sec;
+			min1 = &min;
+			hour1 = &hour; 
+			
+		}
+		if(type == 1 && !timeleft){
+			gameover();
+		} 
+		//timeleft = timeleft - timerun;
 	
 		/*Fill the surface white*/
 		SDL_FillRect( gScreenSurface, NULL, 
@@ -509,24 +612,118 @@ int gameplay(){
 	return 1;
 }
 
-int ranking(){
-	SDL_FillRect( gScreenSurface, NULL, 
-					  SDL_MapRGB( gScreenSurface->format, 
-					  0x00, 0x00, 0x00 ) );
+int ranking(SDL_Event e){
+	SDL_Rect srcRect, dstRect;
+	int quit = false;
+	while( !quit ) {
+		while( SDL_PollEvent( &e ) != 0 ) {
+			switch (e.type) {
+				case SDL_QUIT:
+					quit = true;
+					break;
+				case SDL_KEYDOWN:
+					if (e.key.keysym.sym == SDLK_ESCAPE) {
+						quit = true;
+					}
+				break;
+			}
+		}
+		SDL_FillRect( gScreenSurface, NULL, 
+						  SDL_MapRGB( gScreenSurface->format, 
+						  0x00, 0x00, 0x00 ) );
+		redbar = createIMAGEM(0, 0, gJPGredbar);
+		greenbar = createIMAGEM(0, SCREEN_HEIGHT_EXT-IMAGE_HEIGHT_BAR, gJPGgreenbar);
+		
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = redbar.posX;
+		dstRect.y = redbar.posY;
+		if( SDL_BlitSurface( redbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}
+					
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = greenbar.posX;
+		dstRect.y = greenbar.posY;
+		if( SDL_BlitSurface( greenbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}				  
+		SDL_UpdateWindowSurface( gWindow );
+	}
 	return 1;
 }
 
-int aboutus(){
-	SDL_FillRect( gScreenSurface, NULL, 
-					  SDL_MapRGB( gScreenSurface->format, 
-					  0x00, 0x00, 0x00 ) );
-					  
-	SDL_Color backgroundColor = { 0, 0, 0 };
-	SDL_Color foregroundColor = { 255, 255, 255 };
-	SDL_Surface* textSurface = TTF_RenderText_Shaded(gFont, "EQUIPE:" , foregroundColor, backgroundColor);
-	SDL_Rect textLocation = { SCREEN_WIDTH + 10, 410, 400, 400 };              
-    SDL_BlitSurface(textSurface, NULL, gScreenSurface, &textLocation);
+int aboutus(SDL_Event e){
+	SDL_Rect srcRect, dstRect;
+	int quit = false;
+	while( !quit ) {
+		while( SDL_PollEvent( &e ) != 0 ) {
+			switch (e.type) {
+				case SDL_QUIT:
+					quit = true;
+					break;
+				case SDL_KEYDOWN:
+					if (e.key.keysym.sym == SDLK_ESCAPE) {
+						quit = true;
+					}
+				break;
+			}
+		}
+		
+		SDL_FillRect( gScreenSurface, NULL, 
+						  SDL_MapRGB( gScreenSurface->format, 
+						  0x00, 0x00, 0x00 ) );
+		redbar = createIMAGEM(0, 0, gJPGredbar);
+		greenbar = createIMAGEM(0, SCREEN_HEIGHT_EXT-IMAGE_HEIGHT_BAR, gJPGgreenbar);
+		
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = redbar.posX;
+		dstRect.y = redbar.posY;
+		if( SDL_BlitSurface( redbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}
+					
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = greenbar.posX;
+		dstRect.y = greenbar.posY;
+		if( SDL_BlitSurface( greenbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}				  
+		SDL_Color backgroundColor = { 0, 0, 0 };
+		SDL_Color foregroundColor = { 255, 255, 255 };
+		SDL_Surface* textSurface = TTF_RenderText_Shaded(gFont, "EQUIPE:" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation = { 20, 50, 400, 400 };              
+	    SDL_BlitSurface(textSurface, NULL, gScreenSurface, &textLocation);
+	    SDL_Surface* textSurface1 = TTF_RenderText_Shaded(gFont, "Gustavo Muzy Fraga" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation1 = { 50, 110, 400, 400 };              
+	    SDL_BlitSurface(textSurface1, NULL, gScreenSurface, &textLocation1);
+	    SDL_Surface* textSurface2 = TTF_RenderText_Shaded(gFont, "Lucas Senos Coutinho" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation2 = { 50, 160, 400, 400 };              
+	    SDL_BlitSurface(textSurface2, NULL, gScreenSurface, &textLocation2);
+	    SDL_Surface* textSurface3 = TTF_RenderText_Shaded(gFont, "Rafael Benchimol Klausner" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation3 = { 50, 210, 400, 400 };              
+	    SDL_BlitSurface(textSurface3, NULL, gScreenSurface, &textLocation3);
+	    SDL_Surface* textSurface4 = TTF_RenderText_Shaded(gFont, "Projeto BREAKOUT do periodo 2017.1" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation4 = { 20, 310, 400, 400 };              
+	    SDL_BlitSurface(textSurface4, NULL, gScreenSurface, &textLocation4);
+	    SDL_Surface* textSurface5 = TTF_RenderText_Shaded(gFont, "Professor: Adriano Cruz" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation5 = { 20, 360, 400, 400 };              
+	    SDL_BlitSurface(textSurface5, NULL, gScreenSurface, &textLocation5);
+	    SDL_UpdateWindowSurface( gWindow );
+	}
 	return 1;
+	
 }
 
 
@@ -534,7 +731,7 @@ int aboutus(){
 int menu(){
 	SDL_Rect srcRect, dstRect;
 	SDL_Event e;
-	int quit = false,i;
+	int quit = false,w;
 	/*FILL SURFACE BLACK*/
 	
 	SDL_FillRect( gScreenSurface, NULL, 
@@ -543,8 +740,8 @@ int menu(){
 	SDL_Color backgroundColor = { 0, 0, 0 };
 	SDL_Color foregroundColor = { 255, 255, 255 };
 	
-	for(i = 0; i < 3; i++){
-		button[i] = createRECT(215,220+(100*i));
+	for(w = 0; w < 3; w++){
+		button[w] = createRECT(215,220+(100*w));
 	}
 	
 	while( !quit ) {
@@ -564,7 +761,7 @@ int menu(){
 				break;
 			}
 			for(w = 0; w < 3; w++){
-				handleEvent(&button[w],&e);
+				handleEvent(&button[w],&e,w);
 			}
 		}
 		SDL_FillRect( gScreenSurface, NULL, 
@@ -599,8 +796,8 @@ int menu(){
 		SDL_Rect textLocation = { 90, 40, 200, 200 };              
 		SDL_BlitSurface(textSurface, NULL, gScreenSurface, &textLocation);
 		
-		SDL_Surface* textSurface1 = TTF_RenderText_Shaded(gFont2, "PLAY", foregroundColor, backgroundColor);
-		SDL_Rect textLocation1 = { 330, 190, 200, 200 };              
+		SDL_Surface* textSurface1 = TTF_RenderText_Shaded(gFont2, "GAME MODES", foregroundColor, backgroundColor);
+		SDL_Rect textLocation1 = { 190, 190, 200, 200 };              
 		SDL_BlitSurface(textSurface1, NULL, gScreenSurface, &textLocation1);
 		
 		SDL_Surface* textSurface2 = TTF_RenderText_Shaded(gFont2, "RANKING", foregroundColor, backgroundColor);
@@ -619,7 +816,7 @@ int menu(){
     return 1;
 }
 
-void handleEvent(RECT *botao, SDL_Event* e ) {
+void handleEvent(RECT *botao, SDL_Event* e, int w ) {
     //If mouse event happened
     if( e->type == SDL_MOUSEMOTION || e->type == SDL_MOUSEBUTTONDOWN || e->type == SDL_MOUSEBUTTONUP ) {
         //Get mouse position
@@ -652,30 +849,54 @@ void handleEvent(RECT *botao, SDL_Event* e ) {
                 case SDL_MOUSEBUTTONDOWN:
 					switch(w){
 						case(0):
-							gameplay();
+							//printf("UP0\n");
+							playtypes(*e);
 							break;
 						case(1):
-							ranking();
+							//printf("UP1\n");
+							ranking(*e);
 							break;
 						case(2):
-							aboutus();
+							//printf("UP2\n");
+							aboutus(*e);
+							break;
+						case(3):
+							//printf("UP3\n");
+							type = 0;
+							gameplay(*e);
+							break;
+						case(4):
+							type = 1;
+							//printf("UP4);
+							gameplay(*e);
 							break;
 					}
                 break;
-                
+                /*
                 case SDL_MOUSEBUTTONUP:
 					switch(w){
 						case(0):
-							gameplay();
+							printf("DOWN0\n");
+							playtypes(*e);
 							break;
 						case(1):
-							ranking();
+							printf("DOWN1\n");
+							ranking(*e);
 							break;
 						case(2):
-							aboutus();
+							printf("DOWN2\n");
+							aboutus(*e);
+							break;
+						case(3):
+							printf("DOWN3\n");
+							gameplay(*e);
+							break;
+						case(4):
+							printf("DOWN4\n");
+							gameplay(*e);
 							break;
 					}
-                break;
+                break;*/
             }
         }
     }

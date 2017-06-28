@@ -54,7 +54,7 @@ int nivel = 1;
 int startclock = 0;
 int deltaclock = 0;
 int currentFPS = 0;
-int w = 0;
+int type = 0;
 
 /*
  * Global Variables
@@ -85,7 +85,7 @@ BLOCO bloco[lb][cb];
 IMAGEM coracao;
 IMAGEM redbar;
 IMAGEM greenbar;
-RECT button[3];
+RECT button[5];
 
 /*The surface contained by the window*/
 SDL_Surface* gScreenSurface = NULL;
