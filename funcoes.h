@@ -20,6 +20,8 @@ int gameplay(SDL_Event e);
 
 int playtypes(SDL_Event e);
 
+int putname(SDL_Event e);
+
 int ranking(SDL_Event e);
 
 int aboutus(SDL_Event e);
@@ -27,6 +29,8 @@ int aboutus(SDL_Event e);
 int init();
 
 int loadMedia();
+
+void SPrintKeyInfo( SDL_KeyboardEvent *key, char buffer[125]);
 
 int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time);
 

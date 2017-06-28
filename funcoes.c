@@ -97,12 +97,12 @@ int gameover(){
 	/*BLIT GAME OVER*/
 	
 	SDL_Surface* textSurface = TTF_RenderText_Shaded(gFont1, "GAME OVER", foregroundColor, backgroundColor);
-	SDL_Rect textLocation = { 50, 150, 200, 200 };              
+	SDL_Rect textLocation = { 50, 200, 200, 200 };              
     SDL_BlitSurface(textSurface, NULL, gScreenSurface, &textLocation);
     
     SDL_UpdateWindowSurface( gWindow );
     SDL_Delay(3000);
-    exit(1);
+    menu();
     
 	return 1;
 }
@@ -138,14 +138,16 @@ int check(){
 
 void moveNPC(NPC *p, PLAT *ba) {
 	int i, j;
-	if(p->posY + IMAGE_HEIGHT >= ba->posY){
+	if(p->posY + IMAGE_HEIGHT == ba->posY ){
 		if(p->stepX > 0){
 			if(p->posX <= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX /= 2;
 			if(p->posX >= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX *= 2;  
+			if(p->stepX == 0) p->stepX = 1; 
 		}
 		if(p->stepX < 0){
 			if(p->posX <= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX *= 2;
 			if(p->posX >= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX /= 2; 
+			if(p->stepX == 0) p->stepX = -1;
 		}    
 	}
     p->posX += p->stepX;
@@ -404,6 +406,62 @@ int playtypes(SDL_Event e){
 	}
 	return 1;
 }
+
+int putname(SDL_Event e){
+	//char buffer[125];
+	SDL_Rect srcRect, dstRect;
+	int quit = false;
+	while( !quit ) {
+		while( SDL_PollEvent( &e ) != 0 ) {
+			switch (e.type) {
+				case SDL_QUIT:
+					quit = true;
+					break;
+				case SDL_KEYDOWN:
+					if (e.key.keysym.sym == SDLK_ESCAPE) {
+						quit = true;
+					}
+				break;
+			}
+		}
+		SDL_FillRect( gScreenSurface, NULL, 
+						  SDL_MapRGB( gScreenSurface->format, 
+						  0x00, 0x00, 0x00 ) );
+		redbar = createIMAGEM(0, 0, gJPGredbar);
+		greenbar = createIMAGEM(0, SCREEN_HEIGHT_EXT-IMAGE_HEIGHT_BAR, gJPGgreenbar);
+		
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = redbar.posX;
+		dstRect.y = redbar.posY;
+		if( SDL_BlitSurface( redbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}
+					
+		srcRect.x = 0; srcRect.y = 0;
+		srcRect.w = IMAGE_WIDTH_BAR;
+		srcRect.h = IMAGE_HEIGHT_BAR;
+		dstRect.x = greenbar.posX;
+		dstRect.y = greenbar.posY;
+		if( SDL_BlitSurface( greenbar.image, &srcRect, 
+										gScreenSurface, &dstRect ) < 0 ) {
+						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
+					}				  
+		SDL_Color backgroundColor = { 0, 0, 0 };
+		SDL_Color foregroundColor = { 255, 255, 255 };
+	
+		SDL_Surface* textSurface1 = TTF_RenderText_Shaded(gFont2, "PUT YOUR NAME:", foregroundColor, backgroundColor);
+		SDL_Rect textLocation1 = { 70, 190, 200, 200 };              
+		SDL_BlitSurface(textSurface1, NULL, gScreenSurface, &textLocation1);
+		
+		
+		SDL_UpdateWindowSurface( gWindow );
+	}
+	return 1;
+}
+
 
 int gameplay(SDL_Event e){
 	SDL_Rect srcRect, dstRect;
