@@ -21,6 +21,7 @@ typedef int bool;
 extern Mix_Chunk* sound;
 extern Mix_Chunk* sound1;
 extern Mix_Chunk* sound2;
+extern Mix_Music* CosmoMusic;
 extern Mix_Chunk* nope;
 /*Mix_Chunk* Bounce_Wall;
 Mix_Chunk* Bounce_Block;

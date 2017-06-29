@@ -136,49 +136,42 @@ int check(){
 	return 1;
 }
 
-void moveNPC(NPC *p, PLAT *ba) {
-	int i, j;
-	if(p->posY + IMAGE_HEIGHT == ba->posY ){
-		if(p->stepX > 0){
-			if(p->posX <= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX /= 2;
-			if(p->posX >= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX *= 2;  
-			if(p->stepX == 0) p->stepX = 1; 
-		}
-		if(p->stepX < 0){
-			if(p->posX <= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX *= 2;
-			if(p->posX >= ba->posX+IMAGE_WIDTH_BAR/2) p->stepX /= 2; 
-			if(p->stepX == 0) p->stepX = -1;
-		}    
-	}
-    p->posX += p->stepX;
-    p->posY += p->stepY;
-    
-    if ( (p->posX + IMAGE_WIDTH >= SCREEN_WIDTH) ||
-         (p->posX < 0) ) {
-          p->stepX = -p->stepX;
-          p->posX += p->stepX;
-	      Mix_PlayChannel(-1,sound2, 0);
-    }
-    if (p->posY <= 0) {
-        p->stepY = -p->stepY;
-        p->posY += p->stepY;
-        Mix_PlayChannel(-1,sound2, 0);
-    }
-    if (p->posY + IMAGE_HEIGHT >= SCREEN_HEIGHT)	{
-		p->stepY = rand()%2?1:-1;
-        p->stepX = rand()%2?1:-1;
-        Mix_PlayChannel(-1,nope, 0);
-        vida -= 1;
-        SDL_Delay(500);
-        p->posX = ba->posX + IMAGE_WIDTH_PLATFORM/2;
-		p->posY = ba->posY - (IMAGE_HEIGHT+1); 
-    }
-    if (p->posY + IMAGE_HEIGHT == ba->posY &&
+void colidePlat(NPC *p, PLAT *ba){
+	
+	if (p->posY + IMAGE_HEIGHT == ba->posY &&
         p->posX + (IMAGE_WIDTH/2) <= ba->posX + IMAGE_WIDTH_PLATFORM &&
         p->posX + (IMAGE_WIDTH/2) >= ba->posX) {
 		p->stepY = -(p->stepY);
 		Mix_PlayChannel(-1, sound2, 0);
+		/*if(p->stepX > 0){
+			if(p->posX + IMAGE_WIDTH/2 <= ba->posX+IMAGE_WIDTH_PLATFORM/2) p->stepX /= 2;
+			if(p->posX + IMAGE_WIDTH/2 >= ba->posX+IMAGE_WIDTH_PLATFORM/2) p->stepX *= 2;  
+			if(p->stepX == 0) p->stepX = 1; 
+			if(p->stepX >= 4) p->stepX /= 2;
+		}
+		if(p->stepX < 0){
+			if(p->posX + IMAGE_WIDTH/2 <= ba->posX+IMAGE_WIDTH_PLATFORM/2) p->stepX *= 2;
+			if(p->posX + IMAGE_WIDTH/2 >= ba->posX+IMAGE_WIDTH_PLATFORM/2) p->stepX /= 2; 
+			if(p->stepX == 0) p->stepX = -1;
+			if(p->stepX <= -4) p->stepX /= 2;
+		}    */
 	}
+		
+	if(p->posX == ba->posX + IMAGE_WIDTH_PLATFORM || p->posX + IMAGE_WIDTH == ba->posX){
+		if(p->posY + (IMAGE_HEIGHT/2) <= ba->posY + IMAGE_HEIGHT_PLATFORM &&
+	       p->posY + (IMAGE_HEIGHT/2) >= ba->posY){
+			p->stepX = -(p->stepX);
+			Mix_PlayChannel(-1, sound2, 0);
+		}
+	}
+    p->posX += p->stepX;
+    p->posY += p->stepY;
+}
+
+void colideBloco(NPC *p){
+	
+	int i, j;
+	
 	for(i = 0 ; i < lb ; i++){
 		for(j = 0 ; j < cb ; j++){
 			if(!bloco[i][j].visible){
@@ -204,10 +197,34 @@ void moveNPC(NPC *p, PLAT *ba) {
 					contador--;
 					contador2 -= 100;
 					Mix_PlayChannel(-1,sound1, 0);
-			}
+				}
 			}
 		}
 	}
+}
+
+void moveNPC(NPC *p, PLAT *ba) {
+	
+    if ( (p->posX + IMAGE_WIDTH >= SCREEN_WIDTH) ||
+         (p->posX < 0) ) {
+          p->stepX = -p->stepX;
+          p->posX += p->stepX;
+	      Mix_PlayChannel(-1,sound2, 0);
+    }
+    if (p->posY <= 0) {
+        p->stepY = -p->stepY;
+        p->posY += p->stepY;
+        Mix_PlayChannel(-1,sound2, 0);
+    }
+    if (p->posY + IMAGE_HEIGHT >= SCREEN_HEIGHT)	{
+		p->stepY = rand()%2?1:-1;
+        p->stepX = rand()%2?1:-1;
+        Mix_PlayChannel(-1,nope, 0);
+        vida -= 1;
+        SDL_Delay(1000);
+        p->posX = ba->posX + IMAGE_WIDTH_PLATFORM/2;
+		p->posY = ba->posY - (IMAGE_HEIGHT+1); 
+    }
 }
 
 void handle_input(PLAT *p, SDL_Event event) {
@@ -262,7 +279,7 @@ void movePLATFORM( PLAT *p){
 	
 }
 
-int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time){
+int ttfgame(char *vidas, char *pontos, char *niveis, char *time){
 	SDL_Color backgroundColor = { 0, 0, 0 };
 	SDL_Color foregroundColor = { 255, 255, 255 };
 	
@@ -322,15 +339,15 @@ int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time){
     
     /*BLIT SPEED*/
     
-    SDL_Surface* textSurface7 = TTF_RenderText_Shaded(gFont, "FPS:" , foregroundColor, backgroundColor);
+    /*SDL_Surface* textSurface7 = TTF_RenderText_Shaded(gFont, "FPS:" , foregroundColor, backgroundColor);
 	SDL_Rect textLocation7 = { SCREEN_WIDTH + 10, 410, 400, 400 };              
-    SDL_BlitSurface(textSurface7, NULL, gScreenSurface, &textLocation7);
+    SDL_BlitSurface(textSurface7, NULL, gScreenSurface, &textLocation7);*/
     
     /*BLIT NUMERO DO SPEED*/
 
-    SDL_Surface* textSurface8 = TTF_RenderText_Shaded(gFont, speeds, foregroundColor, backgroundColor);
+    /*SDL_Surface* textSurface8 = TTF_RenderText_Shaded(gFont, speeds, foregroundColor, backgroundColor);
 	SDL_Rect textLocation8 = { SCREEN_WIDTH + 10, 455, 400, 400 };              
-    SDL_BlitSurface(textSurface8, NULL, gScreenSurface, &textLocation8);
+    SDL_BlitSurface(textSurface8, NULL, gScreenSurface, &textLocation8);*/
     
     
     
@@ -362,6 +379,7 @@ int playtypes(SDL_Event e){
 					}
 				break;
 			}
+			SDL_PumpEvents();
 			for(w = 3; w < 5; w++){
 				handleEvent(&button[w],&e,w);
 			}
@@ -470,7 +488,16 @@ int gameplay(SDL_Event e){
     int *sec1, *min1, *hour1;
     int quit;
     rand0 = rand1 = rand2 = rand3 = rand4 = rand5 = 0;
-    
+    char *vidas;
+	char *pontos;
+	char *niveis;
+	//char *speeds;
+	char *times;
+	vidas = malloc(10*sizeof(char));
+	pontos = malloc(20*sizeof(char));
+	niveis = malloc(50*sizeof(char));
+	//speeds = malloc(50*sizeof(char));
+	times = malloc(50*sizeof(char));
 	
 	secstart = time(NULL);
 	
@@ -539,7 +566,7 @@ int gameplay(SDL_Event e){
 		
 		seccurrent = time(NULL);
 		timerun = seccurrent - secstart;
-		timeleft = 300 -(seccurrent - secstart);
+		timeleft = 180 -(seccurrent - secstart);
 		timeleft1 = timeleft;
 		
 		if(type == 0){
@@ -574,29 +601,22 @@ int gameplay(SDL_Event e){
 					  SDL_MapRGB( gScreenSurface->format, 
 					  0x00, 0x00, 0x00 ) );
 					  
-		char *vidas;
-		char *pontos;
-		char *niveis;
-		char *speeds;
-		char *time;
-		vidas = malloc(200*sizeof(char));
-		pontos = malloc(200*sizeof(char));
-		niveis = malloc(200*sizeof(char));
-		speeds = malloc(200*sizeof(char));
-		time = malloc(1000*sizeof(char));
+		
 		vidas = converteIntparaStr(vida);
 		pontos = converteIntparaStr(ponto);
 		niveis = converteIntparaStr(nivel);
-		speeds = converteIntparaStr(currentFPS);
-		time = converteTimeparaStr(sec1, min1, hour1);
+		//speeds = converteIntparaStr(currentFPS);
+		times = converteTimeparaStr(sec1, min1, hour1);
 		
 		/*Using  TTF*/
 		
-		ttfgame(vidas, pontos, niveis, speeds, time);
+		ttfgame(vidas, pontos, niveis, times);
 		
 		
 		for(i = 0 ; i < vb ; i++){
 			moveNPC(&ball[i], &platform);
+			colideBloco(&ball[i]);
+            colidePlat(&ball[i], &platform);
 			
 
 			srcRect.x = 0; srcRect.y = 0;
@@ -711,6 +731,11 @@ int ranking(SDL_Event e){
 										gScreenSurface, &dstRect ) < 0 ) {
 						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
 					}				  
+		SDL_Color backgroundColor = { 0, 0, 0 };
+		SDL_Color foregroundColor = { 255, 255, 255 };
+		SDL_Surface* textSurface = TTF_RenderText_Shaded(gFont2, "Proxima Versao ;)" , foregroundColor, backgroundColor);
+		SDL_Rect textLocation = { 50, 50, 400, 400 };
+		SDL_BlitSurface(textSurface, NULL, gScreenSurface, &textLocation);
 		SDL_UpdateWindowSurface( gWindow );
 	}
 	return 1;
@@ -803,8 +828,8 @@ int menu(){
 	}
 	
 	while( !quit ) {
-		startclock = SDL_GetTicks();
-		startclock = SDL_GetTicks();
+		//startclock = SDL_GetTicks();
+		//startclock = SDL_GetTicks();
 		while( SDL_PollEvent( &e ) != 0 ) {
 			switch (e.type) {
 				case SDL_QUIT:
@@ -818,13 +843,14 @@ int menu(){
 					}
 				break;
 			}
+			SDL_PumpEvents();
 			for(w = 0; w < 3; w++){
 				handleEvent(&button[w],&e,w);
 			}
 		}
-		SDL_FillRect( gScreenSurface, NULL, 
+		/*SDL_FillRect( gScreenSurface, NULL, 
                               SDL_MapRGB( gScreenSurface->format, 
-                              0x00, 0x00, 0x00 ) );
+                              0x00, 0x00, 0x00 ) );*/
 	
 		redbar = createIMAGEM(0, 0, gJPGredbar);
 		greenbar = createIMAGEM(0, SCREEN_HEIGHT_EXT-IMAGE_HEIGHT_BAR, gJPGgreenbar);
@@ -847,8 +873,7 @@ int menu(){
 		if( SDL_BlitSurface( greenbar.image, &srcRect, 
 										gScreenSurface, &dstRect ) < 0 ) {
 						printf( "SDL could not blit! SDL Error: %s\n", SDL_GetError() );
-					}
-					
+					}		
 		/*BLIT TTFs*/			
 		SDL_Surface* textSurface = TTF_RenderText_Shaded(gFont1, "BREAKOUT", foregroundColor, backgroundColor);
 		SDL_Rect textLocation = { 90, 40, 200, 200 };              
@@ -867,7 +892,11 @@ int menu(){
 		SDL_BlitSurface(textSurface3, NULL, gScreenSurface, &textLocation3);
 		
 		SDL_UpdateWindowSurface( gWindow );
-		//SDL_Delay(5000);
+		SDL_FreeSurface(textSurface);		
+		SDL_FreeSurface(textSurface1);			
+		SDL_FreeSurface(textSurface2);			
+		SDL_FreeSurface(textSurface3);
+		SDL_Delay(1);
 		//quit = true;
 	}
 	
@@ -1039,12 +1068,12 @@ int init() {
 	if (!sound) {
 		printf("Wav: SDL error=%s\n", SDL_GetError());
 		return false;
-	}
-	Cosmo_Music = Mix_LoadMUS("Cosmo_Music.wav");
-	if (!sound) {
+	}*/
+	CosmoMusic = Mix_LoadMUS("Cosmo_Music.wav");
+	if (!CosmoMusic) {
 		printf("Wav: SDL error=%s\n", SDL_GetError());
 		return false;
-	}*/
+	}
 		
 	
     return success;
@@ -1164,12 +1193,25 @@ int loadMedia() {
 void closing() {
     /*Free loaded image*/
     SDL_FreeSurface( gJPGSurface );
+    SDL_FreeSurface( gJPGplatform );
+    SDL_FreeSurface( gJPGbloco0 );
+    SDL_FreeSurface( gJPGbloco1 );
+    SDL_FreeSurface( gJPGbloco2 );
+    SDL_FreeSurface( gJPGbloco3 );
+    SDL_FreeSurface( gJPGbloco4 );
+    SDL_FreeSurface( gJPGbloco5 );
+    SDL_FreeSurface( gJPGcoracao );
+    SDL_FreeSurface( gJPGgreenbar );
+    SDL_FreeSurface( gJPGredbar );
     gJPGSurface = NULL;
     free(font_texture);
-    
     //Free global font
 	TTF_CloseFont( gFont );
+	TTF_CloseFont( gFont1 );
+	TTF_CloseFont( gFont2 );
 	gFont = NULL;
+	gFont1 = NULL;
+	gFont2 = NULL;
 
     /*Destroy window*/
     SDL_DestroyRenderer( gRenderer );

@@ -19,6 +19,7 @@ Mix_Chunk* sound;
 Mix_Chunk* sound1;
 Mix_Chunk* sound2;
 Mix_Chunk* nope;
+Mix_Music* CosmoMusic;
 /*Mix_Chunk* Bounce_Wall;
 Mix_Chunk* Bounce_Block;
 Mix_Music* Cosmo_Music;*/

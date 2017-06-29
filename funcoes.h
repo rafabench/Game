@@ -32,7 +32,7 @@ int loadMedia();
 
 void SPrintKeyInfo( SDL_KeyboardEvent *key, char buffer[125]);
 
-int ttfgame(char *vidas, char *pontos, char *niveis, char *speeds, char *time);
+int ttfgame(char *vidas, char *pontos, char *niveis, char *time);
 
 int check();
 
@@ -53,6 +53,10 @@ PLAT createPLATFORM( int posX, int posY, int stepX, int stepY, SDL_Surface *imag
 IMAGEM createIMAGEM( int posX, int posY, SDL_Surface *image);
 
 RECT createRECT( int posX, int posY);
+
+void colidePlat(NPC *p, PLAT *ba);
+
+void colideBloco(NPC *p);
 
 void moveNPC(NPC *p, PLAT *ba);
 
